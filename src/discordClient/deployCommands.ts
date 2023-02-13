@@ -43,7 +43,7 @@ export const setSlashCommands = async () => {
     throw new Error("Missing discord token!");
   }
   const rest = new REST({ version: "10" }).setToken(
-    process.env.DISCORD_TOKEN as string
+    process.env.DISCORD_TOKEN!
   );
   const clientId = discordClient!.user!.id;
   const guilds = await discordClient!.guilds!.fetch();
