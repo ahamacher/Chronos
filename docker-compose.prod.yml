@@ -1,0 +1,7 @@
+version: '3.9'
+
+services:
+  chronos:
+    build:
+      target: production
+    command: node build/index.js

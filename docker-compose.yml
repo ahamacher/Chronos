@@ -1,0 +1,17 @@
+version: '3.9'
+
+services:
+  chronos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base
+    volumes:
+      - ./src:/home/node/app/src
+      - ./nodemon.json:/home/node/app/nodemon.json
+    container_name: ts-node-docker
+    expose:
+      - '5000'
+    ports:
+      - '5000:5000'
+    command: yarn dev-start
