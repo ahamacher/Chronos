@@ -1,67 +1,66 @@
-import { REST } from "@discordjs/rest";
-import { Routes, SlashCommandBuilder } from "discord.js";
-import timezones from "../timezones";
+import { REST } from "@discordjs/rest"
+import { Routes, SlashCommandBuilder } from "discord.js"
+import timezones from "../timezones"
 
-import { discordClient } from "./DiscordClient";
+import { discordClient } from "./DiscordClient"
 
-const tzOptions = [...new Set(Object.values(timezones))];
+const tzOptions = [...new Set(Object.values(timezones))]
 
 const tzRegister = new SlashCommandBuilder()
   .setName("tz_register")
   .setDescription("Registers your timezone")
   .addStringOption((option) => {
-    option.setName("tzcode")
-      .setDescription("Local Timezone")
-      .setRequired(true);
+    option.setName("tzcode").setDescription("Local Timezone").setRequired(true)
     tzOptions.forEach((tz) => {
-      option.addChoices({ name: tz, value: tz });
-    });
-    return option;
-  });
+      option.addChoices({ name: tz, value: tz })
+    })
+    return option
+  })
 
-const commands = [tzRegister];
+const commands = [tzRegister]
 
 const getRegisteredCommands = (data: unknown) => {
-  const commandList: Array<string> = [];
+  const commandList: Array<string> = []
   try {
-    const arrayData = data as Array<any>;
+    const arrayData = data as Array<any>
     arrayData.forEach((item) => {
       if (item?.name) {
-        commandList.push(item.name);
+        commandList.push(item.name)
       }
-    });
+    })
   } catch (e) {
-    console.error("Error with getting the command list", e);
-    return;
+    console.error("Error with getting the command list", e)
+    return
   }
-  return commandList;
-};
+  return commandList
+}
 
 export const setSlashCommands = async () => {
-  const token = process.env.DISCORD_TOKEN;
+  const token = process.env.DISCORD_TOKEN
   if (!token) {
-    throw new Error("Missing discord token!");
+    throw new Error("Missing discord token!")
   }
-  const rest = new REST({ version: "10" }).setToken(
-    process.env.DISCORD_TOKEN!
-  );
-  const clientId = discordClient!.user!.id;
-  const guilds = await discordClient!.guilds!.fetch();
+  const guilds = await discordClient!.guilds!.fetch()
 
   // TODO convert to promise.all to await them
   guilds.forEach(async (guild) => {
-    const guildId = guild.id;
-    await rest
-      .put(Routes.applicationGuildCommands(clientId, guildId), {
-        body: commands,
-      })
-      .then((data) =>
-        console.log(
-          `Successfully registered [${getRegisteredCommands(
-            data
-          )}] application commands.`
-        )
+    await setSlashCommandForGuild(guild.id)
+  })
+}
+
+export const setSlashCommandForGuild = async (guildId: string) => {
+  const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN!)
+  const clientId = discordClient!.user!.id
+  await rest
+    .put(Routes.applicationGuildCommands(clientId, guildId), {
+      body: commands,
+    })
+    .then((data) =>
+      console.log(
+        `Successfully registered [${getRegisteredCommands(
+          data
+        )}] application commands.`
       )
-      .catch(console.error);
-  });
-};
+    )
+    .catch(console.error)
+}
