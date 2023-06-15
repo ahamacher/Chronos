@@ -7,4 +7,4 @@ export default {
   pdt: "America/Los_Angeles",
   edt: "America/New_York",
   utc: "UTC",
-};
+}
