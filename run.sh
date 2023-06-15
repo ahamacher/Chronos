@@ -1,6 +1,8 @@
 #!/bin/bash
 set -x
 
+yarn build
+
 while true
 do
     yarn start
