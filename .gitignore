@@ -32,14 +32,6 @@ yarn-error.log
 # Ignore test coverage directories
 coverage/
 
-# Ignore package-lock files
-package-lock.json
-yarn.lock
-
-# Ignore project specific configuration files
-tsconfig.json
-tsconfig.tsbuildinfo
-
 # Ignore Visual Studio Code directory
 .vscode/
 
