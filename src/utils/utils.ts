@@ -1,4 +1,4 @@
-import { DateTime } from "luxon"
+import { DateTime, FixedOffsetZone } from "luxon"
 import timezoneLocale from "../timezones"
 import { User } from "@prisma/client"
 
@@ -11,12 +11,15 @@ export type TimeStructure = {
 
 // Returns a list of structured data from a message (string)
 export function analyzeText(str: string) {
-  const matcher = /(\d{1,2}(:?\d{2})?\s?[ap]m)\s*((UTC[+-]\d+)|([a-z]{3}))/gim
-  const timeMatches = str.match(matcher)
+  const matcher = /(\d{1,2}(:?\d{2})?\s?[ap]m)\s*((utc[+-]\d+)|([a-z]{3}))/gm
+  const timeMatches = str.toLowerCase().match(matcher)
+  console.log(timeMatches)
   const structuredTimes: TimeStructure[] = []
   if (timeMatches?.length) {
     timeMatches.forEach((match) => {
-      const timeNumbers = match.match(/([0-9])+/g)
+      const splitMatch = match.split(" ") // Separates timezone and time if tz exists
+      const hoursMinutes = splitMatch[0]
+      const timeNumbers = hoursMinutes.match(/([0-9])+/g)
       let hour: string = ""
       let minute: string = ""
       if (timeNumbers?.length) {
@@ -40,7 +43,7 @@ export function analyzeText(str: string) {
         }
         return
       }
-      let meridiem
+      let meridiem: string = ""
       const meridiemMatch = match.match(/([ap]m)/gi)
       if (meridiemMatch) {
         meridiem = meridiemMatch[0]
@@ -69,6 +72,7 @@ export function analyzeText(str: string) {
         )
       }
     }
+    console.log(structuredTimes)
     return structuredTimes
   }
 }
@@ -90,10 +94,20 @@ function validateTimeNumbers(hour: string, minute?: string) {
   return true
 }
 
+function isUTCtimezone(str: string) {
+  const utcStamp = str.match(/([Uu][Tt][Cc][+-]\d+)/gm)
+  return !!utcStamp
+}
+
 function getZoneFromText(str: string) {
   let s = str.split(" ")
   let zone: string | null = null
   let tzAbbrev: string = ""
+
+  if (s[s.length - 1].toLowerCase().match(/(utc[+-]\d+)/gm)) {
+    zone = `${s[s.length - 1].toUpperCase()}`
+  }
+
   if (s.length > 1 && s[s.length - 1].toLowerCase() in timezoneLocale) {
     tzAbbrev = s[s.length - 1].toLowerCase()
     zone = `${tzAbbrev.toUpperCase()}`
@@ -131,29 +145,39 @@ function convertTo24hr(inp: string, meridiem: string) {
   return parsed
 }
 
+type InferredTimezone = {
+  smallName: string | null
+  timezone: string | FixedOffsetZone | null
+  isUTC: boolean
+}
+
 export function inferTimezone(item: TimeStructure, user: User | null) {
   const { zone } = item
   let mappedTimezone = ""
+  const inferredTimezone: InferredTimezone = {
+    smallName: null,
+    timezone: null,
+    isUTC: false,
+  }
 
   if (zone) {
     if (zone.toLowerCase() in timezoneLocale) {
       mappedTimezone = timezoneLocale[zone.toLowerCase()]
+      inferredTimezone.smallName = DateTime.fromJSDate(new Date(), {
+        zone: mappedTimezone,
+      })
+        .toLocaleString(DateTime.DATETIME_FULL)
+        .split(" ")
+        .pop()!
+      inferredTimezone.timezone = mappedTimezone
+    } else if (isUTCtimezone(zone)) {
+      mappedTimezone = zone
+      inferredTimezone.smallName = zone
+      inferredTimezone.timezone = FixedOffsetZone.parseSpecifier(zone)
+      inferredTimezone.isUTC = true
     }
   } else if (!zone && user) {
     mappedTimezone = user.defaultTz
   }
-  if (!mappedTimezone) {
-    return {
-      smallName: null,
-      timezone: null,
-    }
-  }
-
-  return {
-    smallName: DateTime.fromJSDate(new Date(), { zone: mappedTimezone })
-      .toLocaleString(DateTime.DATETIME_FULL)
-      .split(" ")
-      .pop(),
-    timezone: mappedTimezone,
-  }
+  return inferredTimezone
 }

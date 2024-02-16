@@ -35,12 +35,15 @@ discordClient.on("messageCreate", async (msg) => {
     return
   }
 
-  const user = await dbClient.getUser(msg.author.id)
+  // const user = await dbClient.getUser(msg.author.id)
+  const user = null
+  // console.log(`got a user: ${user}`)
   try {
     analyzedText.forEach((item) => {
       try {
         const vTime = getVerboseTime(item)
         const { smallName, timezone } = inferTimezone(item, user)
+        console.log("smallName and Timezone: ", smallName, timezone)
         if (!timezone) return
         const dt = DateTime.fromFormat(vTime, "hhmm", { zone: timezone })
         message += getConversionText(
@@ -53,8 +56,10 @@ discordClient.on("messageCreate", async (msg) => {
           message += "\n"
         }
       } catch (e) {
-        // logger for testing, too loud to keep on normally
-        // console.log(e)
+        if (process.env.DEV_MODE) {
+          // logger for testing, too loud to keep on normally
+          console.log(e)
+        }
       }
     })
     if (!message) return

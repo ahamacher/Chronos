@@ -6,5 +6,6 @@ export default {
   jst: "Asia/Tokyo",
   pdt: "America/Los_Angeles",
   edt: "America/New_York",
+  mdt: "America/Denver",
   utc: "UTC",
 }

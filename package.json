@@ -21,6 +21,7 @@
     "dotenv": "^16.0.2",
     "express": "^4.18.2",
     "luxon": "^3.0.3",
+    "moment-timezone": "^0.5.45",
     "tsc": "^2.0.4"
   },
   "devDependencies": {
