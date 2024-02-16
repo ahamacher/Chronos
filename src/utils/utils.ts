@@ -11,17 +11,14 @@ export type TimeStructure = {
 
 // Returns a list of structured data from a message (string)
 export function analyzeText(str: string) {
-  const matcher =
-    /(((\d+)( *[AaPp][Mm])) *([a-zA-Z]+([+-]\d+)?))|(((\d+):(\d+)( *[AaPp][Mm])*)) *([a-zA-Z]+([+-]\d+)?)?/gi
-  // /(((\d+)( *[AaPp][Mm])) *([a-zA-Z]+)?)|(((\d+):(\d+)( *[AaPp][Mm])*)) *([a-zA-Z]+)?/g;
-  // /(((((\d{1,2}):(\d{1,2}))(\b)?([AaPp][Mm]))|(\d{1,2}) *([AaPp][Mm]))|((\d+):(\d+)( *[AaPp][Mm])*)) *(\w+)?/g; //Old matcher remove later if no problems occur
+  const matcher = /(\d{1,2}(:?\d{2})?\s?[ap]m)\s*((UTC[+-]\d+)|([a-z]{3}))/gim
   const timeMatches = str.match(matcher)
   const structuredTimes: TimeStructure[] = []
   if (timeMatches?.length) {
     timeMatches.forEach((match) => {
       const timeNumbers = match.match(/([0-9])+/g)
-      let hour
-      let minute
+      let hour: string = ""
+      let minute: string = ""
       if (timeNumbers?.length) {
         // handle for things like 1130am
         if (timeNumbers[0].length > 2 && timeNumbers[0].length < 5) {
@@ -38,11 +35,13 @@ export function analyzeText(str: string) {
         }
       }
       if (!validateTimeNumbers(hour, minute)) {
-        // console.log("this is not a valid time", hour, minute);
+        if (process.env.DEV_MODE) {
+          console.log("this is not a valid time", hour, minute)
+        }
         return
       }
       let meridiem
-      const meridiemMatch = match.match(/([AaPp][Mm])/g)
+      const meridiemMatch = match.match(/([ap]m)/gi)
       if (meridiemMatch) {
         meridiem = meridiemMatch[0]
       }
