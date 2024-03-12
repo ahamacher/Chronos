@@ -11,9 +11,9 @@ export type TimeStructure = {
 
 // Returns a list of structured data from a message (string)
 export function analyzeText(str: string) {
-  const matcher = /(\d{1,2}(:?\d{2})?\s?[ap]m)\s*((utc[+-]\d+)|([a-z]{3}))/gm
+  const matcher =
+    /(\d{1,2}(:?\d{2})?\s?([ap]m)?)\s*((utc[+-]\d+)|([a-z]{3})?)/gm
   const timeMatches = str.toLowerCase().match(matcher)
-  console.log(timeMatches)
   const structuredTimes: TimeStructure[] = []
   if (timeMatches?.length) {
     timeMatches.forEach((match) => {
@@ -61,18 +61,6 @@ export function analyzeText(str: string) {
       }
       structuredTimes.push(newTime)
     })
-    if (
-      structuredTimes.find((time) => !time.zone) &&
-      structuredTimes.find((time) => !!time.zone)
-    ) {
-      const defaultZone = structuredTimes.find((time) => time.zone)
-      if (defaultZone) {
-        structuredTimes.map((time) =>
-          time.zone ? time.zone : (time.zone = defaultZone.zone)
-        )
-      }
-    }
-    console.log(structuredTimes)
     return structuredTimes
   }
 }
